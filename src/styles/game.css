@@ -47,6 +47,8 @@
 
 .messageStyle {
     background: white;
+    justify-content: center;
+    align-items: center;
     padding: 30px;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     border-radius: 5%;
@@ -76,6 +78,11 @@
 }
 
 .score_val {
+    color: gold;
+    font-weight: bold;
+}
+
+.highScoreVal {
     color: gold;
     font-weight: bold;
 }

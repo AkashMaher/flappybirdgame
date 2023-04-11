@@ -11,12 +11,12 @@ const baseUrl = import.meta.env.VITE_APIURL
 const contract = import.meta.env.VITE_CONTRACT
 
 const initialImages = [
-  {name:"bird1",value:"images/bird1.png",status:"Unlocked"},
-  {name:"bird2", value:"images/bird2.png",status:"Unlock at 20 Score", token_id:0},
-  {name:"bird3", value:"images/bird3.png",status:"Unlock at 35 Score", token_id:1},
-  {name:"bird4", value:"images/bird4.png",status:"Unlock at 55 Score", token_id:2},
-  {name:"bird5", value:"images/bird5.png",status:"Unlock at 80 Score", token_id:3},
-  {name:"bird6", value:"images/bird6.png",status:"Unlock at 110 Score", token_id:4},
+  {name:"bird1",value:"images/bird1.png",status:"Unlocked Free"},
+  {name:"bird2", value:"images/bird2.png",status:"Unlock at 5 Score", token_id:0},
+  {name:"bird3", value:"images/bird3.png",status:"Unlock at 10 Score", token_id:1},
+  {name:"bird4", value:"images/bird4.png",status:"Unlock at 20 Score", token_id:2},
+  {name:"bird5", value:"images/bird5.png",status:"Unlock at 30 Score", token_id:3},
+  {name:"bird6", value:"images/bird6.png",status:"Unlock at 50 Score", token_id:4},
 ]
 const Contract = import.meta.env.VITE_CONTRACT
 const MetaMaskConnect = () => {
@@ -84,6 +84,12 @@ const MetaMaskConnect = () => {
           <>
           <Button sx={{ borderRadius: '16px' }} variant="contained" color='success' onClick={handlePlayBtn}>{'Play Now'}</Button>
           <Button sx={{ borderRadius: '16px' }} variant="contained" color='success' onClick={toggleAssets}>{showAssets ? 'Hide Assets' : 'Show Assets'}</Button>
+          {showAssets ? (
+            <Typography variant="body1" color="black">
+               {'Unlock Birds by playing game or buy from Marketplace'}
+            </Typography>
+          ) : null}
+          {showAssets &&<Button sx={{ borderRadius: '16px' }} variant="contained" color='success' onClick={()=> {window.open(`https://testnets.gamestoweb3.com/collections/${contract}`, '_block')}}>Buy On Marketplace</Button>}
           </>}
         </Stack>
 

@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { useGlobalContext } from '../context';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { local } from 'web3modal';
 
 const baseUrl = import.meta.env.VITE_APIURL
 const contract = import.meta.env.VITE_CONTRACT
 const ApiKey = import.meta.env.VITE_DEV_API
 const DevAddress= import.meta.env.VITE_DEV_ADDRESS
+const GameBackend = import.meta.env.VITE_BACKEND
 
 const PlayGame = () => {
 
@@ -16,11 +18,12 @@ const PlayGame = () => {
 
     const navigate = useNavigate();
     let { account, selectedAsset } = useGlobalContext();
-    let CacheImage = localStorage.getItem('selectedImage')
+    let CacheImage = localStorage.getItem(`${account?account:account_address}-selectedImage`)
     const [high_score,setHighScore] = useState(0)
+    const [txnProcessing,setTxnState] = useState(false)
 
     useEffect(()=> {
-        let highScore = localStorage.getItem('highScore')
+        let highScore = localStorage.getItem(`${account?account:account_address}-highScore`)
         setHighScore(highScore)
     })
 
@@ -31,60 +34,61 @@ const PlayGame = () => {
 
 
     const handleMint = async () => {
-        let score = localStorage.getItem('score');
+        let score = localStorage.getItem(`${account?account:account_address}-score`);
         let token_id = [];
-        if(score>=110) {
-            token_id.push(4)
-        } 
-        if(score>=80) {
-            token_id.push(3)
-        }
-        if(score>=55) {
-            token_id.push(2)
-        }
-        if(score>=35) {
-            token_id.push(1)
-        }
-        if(score>=20) {
-            token_id.push(0)
-        }
+        if(score>=50) {token_id = [0,1,2,3,4]} 
+        else if(score>=30) {token_id = [0,1,2,3]}
+        else if(score>=20) {token_id =[0,1,2]}
+        else if(score>=10) {token_id=[0,1]}
+        else if(score>=5) {token_id=[0]}
     
+        
+
+        console.log(token_id)
+        
         for(let i = 0;i<token_id.length;i++){
-            let tokenId = token_id[i]
-            const tokens = await axios.get(`${baseUrl}/nft/g2w3-1155/get-tokens/${account?account:account_address}/${contract}/${tokenId}`);
-
-        // console.log(tokens?.data?.number_of_tokens?.tokens)
-            if(tokens?.data?.number_of_tokens?.tokens !== undefined && tokens?.data?.number_of_tokens?.tokens>0 && score>=5) return console.log('already unlocked')
-
-            const mintObject = {
-                wallet_address: DevAddress,
-                contract_address: contract,
-                token_owner: account?account:account_address,
-                token_id:tokenId,
-                number_of_tokens:1,
-                name:'',
-                image_uri: '',
-                description:'',
-                external_uri: '',
-                attributes:[]
-            };
-            // console.log(mintObject)
-            // console.log("From UPLOAD FILE", { account, apiKey, mintObject });
-
-            const mintApi = `${baseUrl}/nft/mint-1155`;
-            const response = await axios.post(mintApi, mintObject, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-HEADER': ApiKey
-                }
-            })
-            console.log('unlocking new bird ', tokenId)
+            await mint(token_id[i])
+        // return
         }
-    
-    //   console.log(response);
-    //   navigate("/", { replace: true });
+        return ;
+
 
    };
+
+   let mint = async (tokenId)=> {
+    if(!account && !account_address) return console.log('account not connected')
+    let getStatus = localStorage.getItem(`${account?account:account_address}-${tokenId}`)
+    if(getStatus =='minted') return console.log(tokenId,' is already minted')
+        const tokens = await axios.get(`${baseUrl}/nft/g2w3-1155/get-tokens/${account?account:account_address}/${contract}/${tokenId}`);
+        console.log(tokens)
+        // console.log(tokens?.data?.number_of_tokens?.tokens)
+        if(tokens?.data?.number_of_tokens?.tokens !== undefined && tokens?.data?.number_of_tokens?.tokens>0) return console.log('already unlocked', tokenId)
+
+        const mintObject = {
+            wallet_address: DevAddress,
+            contract_address: contract,
+            token_owner: account?account:account_address,
+            token_id:tokenId,
+            number_of_tokens:1,
+            name:'',
+            image_uri: '',
+            description:'',
+            external_uri: '',
+            attributes:[]
+        };
+        // console.log(mintObject)
+        // console.log("From UPLOAD FILE", { account, apiKey, mintObject });
+
+        const mintApi = `${baseUrl}/nft/mint-1155`;
+        const response = await axios.post(mintApi, mintObject, {
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-HEADER': ApiKey
+            }
+        })
+        console.log('unlocking new bird ', tokenId)
+        localStorage.setItem(`${account?account:account_address}-${tokenId}`,'minted')
+   }
 
 
 
@@ -101,7 +105,7 @@ const PlayGame = () => {
     let pipe_seperation = 0;
     let pipe_gap = 55;
 
-    const [imageUrl, setImageUrl] = useState('images/bird1.png');
+    const [imageUrl, setImageUrl] = useState(selectedAsset);
     console.log(selectedAsset);
     useEffect(() => {
         const fetchImage = async () => {
@@ -145,14 +149,14 @@ const PlayGame = () => {
 
         document.addEventListener('keydown', (e) => {
             if (e.key == 'ArrowUp' || e.key == ' ') {
-                img.src = 'images/bird1.png';
+                img.src = selectedAsset;
                 bird_dy = -7.6;
             }
         });
 
         document.addEventListener('keyup', (e) => {
             if (e.key == 'ArrowUp' || e.key == ' ') {
-                img.src = 'images/bird1.png';
+                img.src = selectedAsset;
             }
         });
 
@@ -171,6 +175,7 @@ const PlayGame = () => {
             document.querySelectorAll('.pipe_sprite').forEach((e) => {
                 e.remove();
             });
+            if(!account && !account_address) return navigate('/', { replace: true });
             img.classList.remove('disp_none');
             img.classList.add('disp_block');
             bird.style.top = '40vh';
@@ -232,9 +237,11 @@ const PlayGame = () => {
                 } else {
                     if (bird_props.left < pipe_sprite_props.left + pipe_sprite_props.width && bird_props.left + bird_props.width > pipe_sprite_props.left && bird_props.top < pipe_sprite_props.top + pipe_sprite_props.height && bird_props.top + bird_props.height > pipe_sprite_props.top) {
                         game_state = 'End';
-                        message.innerHTML = 'Game Over' + '<br>Press Enter To Restart';
+                        message.innerHTML = 'Game Over' + '<br>Press Enter To Restart'+'<br>Restart';
                         message.classList.add('messageStyle');
-                        img.style.display = 'none';
+                        // img.style.display = 'none';
+                        img.src = imageUrl;
+                        bird_dy = -7.6;
                         handleMint();
                         // sound_die.play();
                         return;
@@ -242,15 +249,15 @@ const PlayGame = () => {
                         if (pipe_sprite_props.right < bird_props.left && pipe_sprite_props.right + move_speed >= bird_props.left && element.increase_score == '1') {
                             score_val.innerHTML = + score_val.innerHTML + 1;
                             // console.log(score_val.innerHTML)
-                            localStorage.setItem('score', parseInt(score_val.innerHTML))
-                            let highScore = localStorage.getItem('highScore');
+                            localStorage.setItem(`${account?account:account_address}-score`, parseInt(score_val.innerHTML))
+                            let highScore = localStorage.getItem(`${account?account:account_address}-highScore`);
                             setHighScore(highScore)
                             if(highScore && highScore>=parseInt(score_val.innerHTML)) {
 
                             } else {
-                                localStorage.setItem('highScore', parseInt(score_val.innerHTML))
+                                localStorage.setItem(`${account?account:account_address}-highScore`, parseInt(score_val.innerHTML))
                             }
-                            highScore = localStorage.getItem('highScore');
+                            highScore = localStorage.getItem(`${account?account:account_address}-highScore`);
                             setHighScore(highScore)
                             // console.log(highScore)
                             // sound_point.play();
@@ -287,14 +294,25 @@ const PlayGame = () => {
             });
 
             if (bird_props.top <= 0 || bird_props.bottom >= background.bottom) {
+                // game_state = 'End';
+                // // message.style.left = '28vw';
+                // console.log("HIT BOTTOM");
+                // // alert("GAME OVER");
+                // message.classList.remove('messageStyle');
+                // handleMint();
+                // return;
+                // navigate('/', { replace: true })
+
                 game_state = 'End';
-                // message.style.left = '28vw';
-                console.log("HIT BOTTOM");
-                // alert("GAME OVER");
-                message.classList.remove('messageStyle');
+                message.innerHTML = 'Game Over' + '<br>Press Enter To Restart'+'<br>Restart';
+                message.classList.add('messageStyle');
+                img.src = imageUrl
+                        ;
+                bird_dy = -7.6;
+                // img.style.display = 'none';
                 handleMint();
+                // sound_die.play();
                 return;
-                navigate('/', { replace: true })
             }
             bird.style.top = bird_props.top + bird_dy + 'px';
             bird_props = bird.getBoundingClientRect();
@@ -306,16 +324,16 @@ const PlayGame = () => {
         <div>
             <div className="background"></div>
             {/* <>{account}</> */}
-            <img src="images/bird1.png" alt="bird-img" className="bird" id="bird-1" />
+            <img src={imageUrl} alt="bird-img" className="bird" id="bird-1" />
             <div className="message">
                 Enter To Start Game <p>
                     <span>&uarr;</span> ArrowUp to Control</p>
             </div>
             <div className="score">
-                <div className='highScore'>{`High Score: ${high_score}`}</div>
-                <div className="score_title"></div>
-                <div className="score_val"></div>
-
+                <div className='highScore'>{`High Score: `}<span className='highScoreVal'>{high_score?high_score:0}</span></div>
+                {/* <div className="score_title"></div>
+                <div className="score_val"></div> */}
+                <div><span className='score_title'></span><span className='score_val'></span></div>
             </div>
         </div>
     )

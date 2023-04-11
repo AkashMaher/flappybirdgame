@@ -5,7 +5,7 @@ import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
 import { styled } from "@mui/system"; // <--- Add this ✅
 
-
+const contract = import.meta.env.VITE_CONTRACT
 
 
 const ImageComponent = ({ images, userTokens }) => {
@@ -25,10 +25,10 @@ const handleClick=(_value)=>{
   if(image?.name == 'bird1' || TokenIds?.includes(image?.token_id)) {
     console.log('success');
     handleImageClick(image?.value);
-    localStorage.setItem('selectedImage',image?.value)
+    localStorage.setItem(`${account?account:account_address}-selectedImage`,image?.value)
     navigate('/play', { replace: true });
   }
-  
+
 }
 
 
@@ -47,6 +47,7 @@ const classes = styled((theme) => ({
 
 
       return (
+        <>
         <ImageList sx={{ width: 500, height: 450 }} cols={3} rowHeight={164}>
           {images.map((image, index) => (
             <ImageListItem key={index} >
@@ -64,6 +65,8 @@ const classes = styled((theme) => ({
             
           ))}
         </ImageList>
+        {/* <p sx={{padding:"5px"}}>Unlock Birds by playing game or buy from <span sx={{cursor: 'pointer'}} onClick={()=> {window.open(`https://testnets.gamestoweb3.com/collections/${contract}`, '_block')}}>marketplace</span></p> */}
+        </>
       );
     }
     
