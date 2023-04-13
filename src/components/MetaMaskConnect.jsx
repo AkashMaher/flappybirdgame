@@ -89,7 +89,7 @@ const MetaMaskConnect = () => {
                {'Unlock Birds by playing game or buy from Marketplace'}
             </Typography>
           ) : null}
-          {showAssets &&<Button sx={{ borderRadius: '16px' }} variant="contained" color='success' onClick={()=> {window.open(`https://testnets.gamestoweb3.com/collections/${contract}`, '_block')}}>Buy On Marketplace</Button>}
+          {showAssets &&<Button sx={{ borderRadius: '16px' }} variant="contained" color='success' onClick={()=> {window.open(`https://gamestoweb3.com/collections/${contract}`, '_block')}}>Buy On Marketplace</Button>}
           </>}
         </Stack>
 
